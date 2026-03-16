@@ -2,11 +2,11 @@
   <div class="dashboard">
     <div class="hero">
       <div>
-        <div class="hero-kicker">运营总览</div>
-        <h2>租赁业务数据与首页推荐内容集中展示</h2>
-        <p>热门车辆和广告位数据直接来自 Redis 缓存，适合作为首页低延迟展示区域。</p>
+        <div class="hero-kicker">业务概览</div>
+        <h2>集中查看热门车辆与首页广告的展示数据</h2>
+        <p>首页用于辅助日常运营，优先展示车辆推荐和广告内容，不展示无关技术信息。</p>
       </div>
-      <div class="hero-mark">CAR</div>
+      <div class="hero-mark">租赁</div>
     </div>
 
     <div class="stat-grid">
@@ -19,25 +19,27 @@
         <div class="stat-value">{{ banners.length }}</div>
       </div>
       <div class="page-card stat-card">
-        <div class="stat-label">系统状态</div>
-        <div class="stat-value">稳定</div>
+        <div class="stat-label">业务状态</div>
+        <div class="stat-value">正常</div>
       </div>
     </div>
 
     <div class="dashboard-grid">
       <div class="page-card">
-        <h3 class="section-title">热点车辆</h3>
+        <h3 class="section-title">热门车辆</h3>
         <el-table :data="hotVehicles">
           <el-table-column prop="vehicleNo" label="车牌号" />
           <el-table-column prop="brand" label="品牌" />
           <el-table-column prop="model" label="型号" />
           <el-table-column prop="dailyPrice" label="日租金" />
-          <el-table-column prop="status" label="状态" />
+          <el-table-column label="状态">
+            <template slot-scope="{ row }">{{ statusText(row.status) }}</template>
+          </el-table-column>
         </el-table>
       </div>
 
       <div class="page-card">
-        <h3 class="section-title">首页广告位</h3>
+        <h3 class="section-title">广告内容</h3>
         <el-timeline>
           <el-timeline-item
             v-for="item in banners"
@@ -46,7 +48,7 @@
             placement="top"
           >
             <div class="timeline-title">{{ item.title }}</div>
-            <div class="timeline-desc">{{ item.redirectUrl || '无跳转地址' }}</div>
+            <div class="timeline-desc">{{ item.redirectUrl || "未设置跳转地址" }}</div>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -74,6 +76,9 @@ export default {
       const [vehicleRes, bannerRes] = await Promise.all([getHotVehicles(), getActiveBanners()]);
       this.hotVehicles = vehicleRes.data || [];
       this.banners = bannerRes.data || [];
+    },
+    statusText(status) {
+      return { AVAILABLE: "可租赁", RENTED: "租赁中", MAINTENANCE: "维护中" }[status] || status;
     }
   }
 };

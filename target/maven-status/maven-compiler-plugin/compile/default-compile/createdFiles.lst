@@ -1,8 +1,11 @@
 com\example\carrental\handler\GlobalExceptionHandler.class
+com\example\carrental\controller\UserOrderController.class
 com\example\carrental\model\vo\LoginResponse.class
 com\example\carrental\model\entity\SysUser.class
 com\example\carrental\model\dto\TokenRefreshRequest.class
+com\example\carrental\service\UserService.class
 com\example\carrental\config\CacheProperties.class
+com\example\carrental\model\vo\UserVO.class
 com\example\carrental\mapper\VehicleMapper.class
 com\example\carrental\service\impl\VehicleServiceImpl.class
 com\example\carrental\controller\CustomerController.class
@@ -11,6 +14,7 @@ com\example\carrental\controller\VehicleController.class
 com\example\carrental\config\WebMvcConfig.class
 com\example\carrental\service\impl\AuthServiceImpl.class
 com\example\carrental\service\CustomerService.class
+com\example\carrental\config\AdminUserInitializer.class
 com\example\carrental\model\entity\RentalOrder.class
 com\example\carrental\model\dto\LoginRequest.class
 com\example\carrental\config\JwtProperties.class
@@ -35,10 +39,16 @@ com\example\carrental\service\impl\CustomerServiceImpl.class
 com\example\carrental\mapper\SysUserMapper.class
 com\example\carrental\common\ApiResponse.class
 com\example\carrental\service\impl\OrderServiceImpl.class
+com\example\carrental\model\dto\UserSaveRequest.class
+com\example\carrental\service\impl\UserServiceImpl.class
 com\example\carrental\controller\BannerController.class
 com\example\carrental\model\vo\PageResult.class
 com\example\carrental\model\dto\OrderQueryRequest.class
 com\example\carrental\service\BannerService.class
+com\example\carrental\config\SecurityConfig.class
+com\example\carrental\model\dto\UserRentOrderRequest.class
 com\example\carrental\model\entity\Customer.class
+com\example\carrental\model\dto\RegisterRequest.class
 com\example\carrental\context\UserContext.class
+com\example\carrental\controller\UserController.class
 com\example\carrental\common\ErrorCode.class

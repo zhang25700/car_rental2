@@ -4,10 +4,10 @@
     <div class="toolbar">
       <el-input v-model="query.orderNo" placeholder="订单号" clearable />
       <el-select v-model="query.orderStatus" placeholder="订单状态" clearable>
-        <el-option label="CREATED" value="CREATED" />
-        <el-option label="ONGOING" value="ONGOING" />
-        <el-option label="FINISHED" value="FINISHED" />
-        <el-option label="CANCELLED" value="CANCELLED" />
+        <el-option label="待提车" value="CREATED" />
+        <el-option label="租赁中" value="ONGOING" />
+        <el-option label="已完成" value="FINISHED" />
+        <el-option label="已取消" value="CANCELLED" />
       </el-select>
       <el-button type="primary" @click="loadData">查询</el-button>
       <el-button @click="resetQuery">重置</el-button>
@@ -21,11 +21,13 @@
       <el-table-column prop="pickupTime" label="取车时间" width="180" />
       <el-table-column prop="returnTime" label="还车时间" width="180" />
       <el-table-column prop="totalAmount" label="总金额" />
-      <el-table-column prop="orderStatus" label="状态" />
+      <el-table-column label="状态">
+        <template slot-scope="{ row }">{{ statusText(row.orderStatus) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="180">
         <template slot-scope="{ row }">
-          <el-button type="text" @click="changeStatus(row, 'ONGOING')">进行中</el-button>
-          <el-button type="text" @click="changeStatus(row, 'FINISHED')">完成</el-button>
+          <el-button type="text" @click="changeStatus(row, 'ONGOING')">开始租赁</el-button>
+          <el-button type="text" @click="changeStatus(row, 'FINISHED')">完成订单</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -45,12 +47,8 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="客户ID"><el-input-number v-model="form.customerId" :min="1" /></el-form-item>
         <el-form-item label="车辆ID"><el-input-number v-model="form.vehicleId" :min="1" /></el-form-item>
-        <el-form-item label="取车时间">
-          <el-date-picker v-model="form.pickupTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" />
-        </el-form-item>
-        <el-form-item label="还车时间">
-          <el-date-picker v-model="form.returnTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" />
-        </el-form-item>
+        <el-form-item label="取车时间"><el-date-picker v-model="form.pickupTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" /></el-form-item>
+        <el-form-item label="还车时间"><el-date-picker v-model="form.returnTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" /></el-form-item>
         <el-form-item label="日租金"><el-input-number v-model="form.dailyRent" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="总金额"><el-input-number v-model="form.totalAmount" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
@@ -81,12 +79,7 @@ export default {
   name: "OrderPage",
   data() {
     return {
-      query: {
-        pageNum: 1,
-        pageSize: 10,
-        orderNo: "",
-        orderStatus: ""
-      },
+      query: { pageNum: 1, pageSize: 10, orderNo: "", orderStatus: "" },
       tableData: [],
       total: 0,
       dialogVisible: false,
@@ -120,6 +113,9 @@ export default {
       await updateOrderStatus(row.id, status);
       this.$message.success("订单状态已更新");
       this.loadData();
+    },
+    statusText(status) {
+      return { CREATED: "待提车", ONGOING: "租赁中", FINISHED: "已完成", CANCELLED: "已取消" }[status] || status;
     }
   }
 };

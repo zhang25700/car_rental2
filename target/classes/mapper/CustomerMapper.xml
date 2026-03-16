@@ -20,6 +20,13 @@
         where id = #{id}
     </select>
 
+    <select id="selectByPhone" resultMap="CustomerMap">
+        select id, customer_name, phone, gender, driver_license_no, id_card_no, status, created_at, updated_at
+        from customer
+        where phone = #{phone}
+        limit 1
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into customer (customer_name, phone, gender, driver_license_no, id_card_no, status, created_at, updated_at)
         values (#{customerName}, #{phone}, #{gender}, #{driverLicenseNo}, #{idCardNo}, #{status}, now(), now())

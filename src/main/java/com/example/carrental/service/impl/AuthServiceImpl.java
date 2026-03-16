@@ -3,11 +3,14 @@ package com.example.carrental.service.impl;
 import com.example.carrental.common.BusinessException;
 import com.example.carrental.common.ErrorCode;
 import com.example.carrental.config.JwtProperties;
+import com.example.carrental.mapper.CustomerMapper;
 import com.example.carrental.mapper.SysUserMapper;
 import com.example.carrental.model.auth.LoginUser;
 import com.example.carrental.model.dto.LoginRequest;
+import com.example.carrental.model.dto.RegisterRequest;
 import com.example.carrental.model.dto.TokenRefreshRequest;
 import com.example.carrental.model.entity.SysUser;
+import com.example.carrental.model.entity.Customer;
 import com.example.carrental.model.vo.LoginResponse;
 import com.example.carrental.security.AuthInterceptor;
 import com.example.carrental.security.JwtTokenProvider;
@@ -21,16 +24,18 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final SysUserMapper sysUserMapper;
+    private final CustomerMapper customerMapper;
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtProperties jwtProperties;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -44,6 +49,29 @@ public class AuthServiceImpl implements AuthService {
 
         LoginUser loginUser = new LoginUser(user.getId(), user.getUsername(), user.getRole());
         return createTokens(loginUser);
+    }
+
+    @Override
+    public void register(RegisterRequest request) {
+        if (sysUserMapper.selectByUsername(request.getUsername()) != null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "用户名已存在");
+        }
+        SysUser user = new SysUser();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRealName(request.getRealName());
+        user.setRole("USER");
+        user.setStatus(1);
+        sysUserMapper.insert(user);
+
+        Customer customer = new Customer();
+        customer.setCustomerName(request.getRealName());
+        customer.setPhone(request.getUsername());
+        customer.setGender("未设置");
+        customer.setDriverLicenseNo("DL" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase());
+        customer.setIdCardNo("ID" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase());
+        customer.setStatus(1);
+        customerMapper.insert(customer);
     }
 
     @Override
@@ -72,6 +100,6 @@ public class AuthServiceImpl implements AuthService {
         );
         long accessExpireAt = Instant.now().plus(jwtProperties.getAccessTokenExpireMinutes(), ChronoUnit.MINUTES).toEpochMilli();
         long refreshExpireAt = Instant.now().plus(jwtProperties.getRefreshTokenExpireDays(), ChronoUnit.DAYS).toEpochMilli();
-        return new LoginResponse(accessToken, refreshToken, accessExpireAt, refreshExpireAt);
+        return new LoginResponse(accessToken, refreshToken, loginUser.getRole(), accessExpireAt, refreshExpireAt);
     }
 }

@@ -13,6 +13,8 @@ public interface CustomerMapper {
 
     Customer selectById(@Param("id") Long id);
 
+    Customer selectByPhone(@Param("phone") String phone);
+
     int insert(Customer customer);
 
     int update(Customer customer);

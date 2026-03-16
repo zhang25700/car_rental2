@@ -2,67 +2,170 @@
   <div class="login-page">
     <div class="login-panel">
       <div class="login-copy">
-        <div class="login-badge">B/S · Spring Boot · Vue2</div>
+        <div class="login-badge">租赁业务后台</div>
         <h1>汽车租赁管理系统</h1>
-        <p>面向车辆管理、客户管理、订单流转和首页广告位运营的一体化后台。</p>
+        <p>用于维护车辆信息、客户资料、租赁订单、广告内容以及账号信息。</p>
       </div>
 
-      <el-form ref="form" :model="form" :rules="rules" class="login-form">
-        <h2>后台登录</h2>
-        <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" prefix-icon="el-icon-user" />
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            prefix-icon="el-icon-lock"
-            @keyup.enter.native="submit"
-          />
-        </el-form-item>
-        <el-button type="primary" class="login-button" :loading="loading" @click="submit">登录系统</el-button>
-        <div class="tips">默认账号：admin / password</div>
-      </el-form>
+      <div class="login-form-wrap">
+        <div class="form-switch">
+          <button :class="{ active: mode === 'login' }" @click="mode = 'login'">登录</button>
+          <button :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
+        </div>
+
+        <el-form
+          v-if="mode === 'login'"
+          ref="loginForm"
+          :model="loginForm"
+          :rules="loginRules"
+          class="login-form"
+        >
+          <h2>账号登录</h2>
+          <el-form-item prop="username">
+            <el-input v-model="loginForm.username" placeholder="请输入用户名" prefix-icon="el-icon-user" />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="loginForm.password"
+              type="password"
+              placeholder="请输入密码"
+              prefix-icon="el-icon-lock"
+              @keyup.enter.native="submitLogin"
+            />
+          </el-form-item>
+          <el-button type="primary" class="login-button" :loading="loading" @click="submitLogin">登录系统</el-button>
+          <div class="tips">默认管理员账号：admin / password</div>
+        </el-form>
+
+        <el-form
+          v-else
+          ref="registerFormRef"
+          :model="registerForm"
+          :rules="registerRules"
+          class="login-form"
+        >
+          <h2>注册账号</h2>
+          <el-form-item prop="username">
+            <el-input v-model="registerForm.username" placeholder="请输入用户名" prefix-icon="el-icon-user" />
+          </el-form-item>
+          <el-form-item prop="realName">
+            <el-input v-model="registerForm.realName" placeholder="请输入姓名" prefix-icon="el-icon-edit" />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="registerForm.password"
+              type="password"
+              placeholder="请输入密码"
+              prefix-icon="el-icon-lock"
+            />
+          </el-form-item>
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="registerForm.confirmPassword"
+              type="password"
+              placeholder="请再次输入密码"
+              prefix-icon="el-icon-lock"
+              @keyup.enter.native="submitRegister"
+            />
+          </el-form-item>
+          <el-button type="primary" class="login-button" :loading="loading" @click="submitRegister">提交注册</el-button>
+          <div class="tips">注册成功后将进入用户端</div>
+        </el-form>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { login } from "../api/auth";
+import { login, register } from "../api/auth";
 import { setTokens } from "../utils/storage";
 
 export default {
   name: "LoginPage",
   data() {
+    const validateConfirmPassword = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error("请再次输入密码"));
+        return;
+      }
+      if (value !== this.registerForm.password) {
+        callback(new Error("两次输入的密码不一致"));
+        return;
+      }
+      callback();
+    };
+
     return {
+      mode: "login",
       loading: false,
-      form: {
+      loginForm: {
         username: "admin",
         password: "password"
       },
-      rules: {
+      registerForm: {
+        username: "",
+        realName: "",
+        password: "",
+        confirmPassword: ""
+      },
+      loginRules: {
         username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
         password: [{ required: true, message: "请输入密码", trigger: "blur" }]
+      },
+      registerRules: {
+        username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+        realName: [{ required: true, message: "请输入姓名", trigger: "blur" }],
+        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+        confirmPassword: [{ validator: validateConfirmPassword, trigger: "blur" }]
       }
     };
   },
   methods: {
-    submit() {
-      this.$refs.form.validate(async valid => {
+    submitLogin() {
+      this.$refs.loginForm.validate(async valid => {
         if (!valid) {
           return;
         }
         this.loading = true;
         try {
-          const res = await login(this.form);
-          setTokens(res.data.accessToken, res.data.refreshToken);
+          const res = await login(this.loginForm);
+          setTokens(res.data.accessToken, res.data.refreshToken, res.data.role);
           this.$message.success("登录成功");
-          this.$router.replace("/dashboard");
+          this.$router.replace(this.isAdminRole(res.data.role) ? "/admin/dashboard" : "/user/home");
         } finally {
           this.loading = false;
         }
       });
+    },
+    submitRegister() {
+      this.$refs.registerFormRef.validate(async valid => {
+        if (!valid) {
+          return;
+        }
+        this.loading = true;
+        try {
+          await register({
+            username: this.registerForm.username,
+            realName: this.registerForm.realName,
+            password: this.registerForm.password
+          });
+          this.$message.success("注册成功，请登录");
+          this.mode = "login";
+          this.loginForm.username = this.registerForm.username;
+          this.loginForm.password = "";
+          this.registerForm = {
+            username: "",
+            realName: "",
+            password: "",
+            confirmPassword: ""
+          };
+        } finally {
+          this.loading = false;
+        }
+      });
+    },
+    isAdminRole(role) {
+      return ["ADMIN", "OPERATOR", "STAFF"].includes(role);
     }
   }
 };
@@ -116,8 +219,34 @@ export default {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.login-form-wrap {
+  padding: 40px 44px;
+}
+
+.form-switch {
+  display: inline-flex;
+  padding: 4px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  background: #eef3f7;
+}
+
+.form-switch button {
+  border: none;
+  background: transparent;
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--text-regular);
+}
+
+.form-switch button.active {
+  background: #ffffff;
+  color: var(--text-primary);
+  box-shadow: 0 6px 18px rgba(17, 38, 60, 0.08);
+}
+
 .login-form {
-  padding: 56px 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -151,7 +280,7 @@ export default {
     padding: 36px 30px;
   }
 
-  .login-form {
+  .login-form-wrap {
     padding: 32px 24px;
   }
 }

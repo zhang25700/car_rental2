@@ -6,13 +6,14 @@ spring:
     name: car-rental
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/car_rental?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    url: jdbc:mysql://localhost:3306/car_rental2?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
     username: root
     password: 123456
   data:
     redis:
       host: localhost
       port: 6379
+      password: 123456
       database: 0
       timeout: 3000ms
   jackson:

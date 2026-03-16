@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Message } from "element-ui";
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./storage";
+import { clearTokens, getAccessToken, getRefreshToken, getUserRole, setTokens } from "./storage";
 import router from "../router";
 
 const service = axios.create({
@@ -25,7 +25,7 @@ service.interceptors.response.use(
     const newAccessToken = response.headers["x-new-access-token"];
     const newRefreshToken = response.headers["x-new-refresh-token"];
     if (newAccessToken && newRefreshToken) {
-      setTokens(newAccessToken, newRefreshToken);
+      setTokens(newAccessToken, newRefreshToken, getUserRole());
     }
 
     const body = response.data;
@@ -43,7 +43,11 @@ service.interceptors.response.use(
           refreshToken: getRefreshToken()
         });
         if (refreshResult.data.code === 200) {
-          setTokens(refreshResult.data.data.accessToken, refreshResult.data.data.refreshToken);
+          setTokens(
+            refreshResult.data.data.accessToken,
+            refreshResult.data.data.refreshToken,
+            refreshResult.data.data.role || getUserRole()
+          );
           return service(error.config);
         }
       } catch (e) {

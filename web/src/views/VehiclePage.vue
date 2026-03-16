@@ -4,9 +4,9 @@
     <div class="toolbar">
       <el-input v-model="query.keyword" placeholder="车牌号 / 品牌 / 型号" clearable @keyup.enter.native="loadData" />
       <el-select v-model="query.status" placeholder="车辆状态" clearable>
-        <el-option label="AVAILABLE" value="AVAILABLE" />
-        <el-option label="RENTED" value="RENTED" />
-        <el-option label="MAINTENANCE" value="MAINTENANCE" />
+        <el-option label="可租赁" value="AVAILABLE" />
+        <el-option label="租赁中" value="RENTED" />
+        <el-option label="维护中" value="MAINTENANCE" />
       </el-select>
       <el-button type="primary" @click="loadData">查询</el-button>
       <el-button @click="resetQuery">重置</el-button>
@@ -19,7 +19,9 @@
       <el-table-column prop="model" label="型号" />
       <el-table-column prop="dailyPrice" label="日租金" />
       <el-table-column prop="seatCount" label="座位数" />
-      <el-table-column prop="status" label="状态" />
+      <el-table-column label="状态">
+        <template slot-scope="{ row }">{{ statusText(row.status) }}</template>
+      </el-table-column>
       <el-table-column prop="hotFlag" label="热门">
         <template slot-scope="{ row }">{{ row.hotFlag ? "是" : "否" }}</template>
       </el-table-column>
@@ -53,14 +55,12 @@
         <el-form-item label="日租金"><el-input-number v-model="form.dailyPrice" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status">
-            <el-option label="AVAILABLE" value="AVAILABLE" />
-            <el-option label="RENTED" value="RENTED" />
-            <el-option label="MAINTENANCE" value="MAINTENANCE" />
+            <el-option label="可租赁" value="AVAILABLE" />
+            <el-option label="租赁中" value="RENTED" />
+            <el-option label="维护中" value="MAINTENANCE" />
           </el-select>
         </el-form-item>
-        <el-form-item label="热门车">
-          <el-switch v-model="form.hotFlag" :active-value="1" :inactive-value="0" />
-        </el-form-item>
+        <el-form-item label="热门车"><el-switch v-model="form.hotFlag" :active-value="1" :inactive-value="0" /></el-form-item>
         <el-form-item label="封面图"><el-input v-model="form.coverImage" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" /></el-form-item>
       </el-form>
@@ -93,12 +93,7 @@ export default {
   name: "VehiclePage",
   data() {
     return {
-      query: {
-        pageNum: 1,
-        pageSize: 10,
-        keyword: "",
-        status: ""
-      },
+      query: { pageNum: 1, pageSize: 10, keyword: "", status: "" },
       tableData: [],
       total: 0,
       dialogVisible: false,
@@ -132,6 +127,9 @@ export default {
       await updateVehicleStatus(row.id, status);
       this.$message.success("状态已更新");
       this.loadData();
+    },
+    statusText(status) {
+      return { AVAILABLE: "可租赁", RENTED: "租赁中", MAINTENANCE: "维护中" }[status] || status;
     }
   }
 };

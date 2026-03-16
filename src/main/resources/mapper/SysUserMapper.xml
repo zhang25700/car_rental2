@@ -14,4 +14,32 @@
         where username = #{username}
         limit 1
     </select>
+
+    <select id="selectAll" resultMap="UserMap">
+        select id, username, password, real_name, role, status, created_at, updated_at
+        from sys_user
+        order by id desc
+    </select>
+
+    <select id="selectById" resultMap="UserMap">
+        select id, username, password, real_name, role, status, created_at, updated_at
+        from sys_user
+        where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_user (username, password, real_name, role, status, created_at, updated_at)
+        values (#{username}, #{password}, #{realName}, #{role}, #{status}, now(), now())
+    </insert>
+
+    <update id="update">
+        update sys_user
+        set username = #{username},
+            password = #{password},
+            real_name = #{realName},
+            role = #{role},
+            status = #{status},
+            updated_at = now()
+        where id = #{id}
+    </update>
 </mapper>

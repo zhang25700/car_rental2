@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Router from "vue-router";
-import { getAccessToken } from "../utils/storage";
+import { getAccessToken, getUserRole } from "../utils/storage";
 
 Vue.use(Router);
 
@@ -12,9 +12,10 @@ const router = new Router({
       component: () => import("../views/LoginPage.vue")
     },
     {
-      path: "/",
+      path: "/admin",
       component: () => import("../layout/AppLayout.vue"),
-      redirect: "/dashboard",
+      redirect: "/admin/dashboard",
+      meta: { roles: ["ADMIN", "OPERATOR", "STAFF"] },
       children: [
         {
           path: "dashboard",
@@ -35,8 +36,36 @@ const router = new Router({
         {
           path: "banners",
           component: () => import("../views/BannerPage.vue")
+        },
+        {
+          path: "users",
+          component: () => import("../views/UserPage.vue")
         }
       ]
+    },
+    {
+      path: "/user",
+      component: () => import("../layout/UserLayout.vue"),
+      redirect: "/user/home",
+      meta: { roles: ["USER"] },
+      children: [
+        {
+          path: "home",
+          component: () => import("../views/UserHomePage.vue")
+        },
+        {
+          path: "vehicles",
+          component: () => import("../views/UserVehiclePage.vue")
+        },
+        {
+          path: "banners",
+          component: () => import("../views/UserBannerPage.vue")
+        }
+      ]
+    },
+    {
+      path: "/",
+      redirect: () => (isAdminRole(getUserRole()) ? "/admin/dashboard" : "/user/home")
     }
   ]
 });
@@ -46,11 +75,29 @@ router.beforeEach((to, from, next) => {
     next();
     return;
   }
+
   if (!getAccessToken()) {
     next("/login");
     return;
   }
-  next();
+
+  const role = getUserRole();
+  if (!role) {
+    next("/login");
+    return;
+  }
+
+  const allowedRoles = to.matched.flatMap(record => record.meta.roles || []);
+  if (!allowedRoles.length || allowedRoles.includes(role)) {
+    next();
+    return;
+  }
+
+  next(isAdminRole(role) ? "/admin/dashboard" : "/user/home");
 });
+
+function isAdminRole(role) {
+  return ["ADMIN", "OPERATOR", "STAFF"].includes(role);
+}
 
 export default router;

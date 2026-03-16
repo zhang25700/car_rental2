@@ -2,6 +2,7 @@ package com.example.carrental.controller;
 
 import com.example.carrental.common.ApiResponse;
 import com.example.carrental.model.dto.LoginRequest;
+import com.example.carrental.model.dto.RegisterRequest;
 import com.example.carrental.model.dto.TokenRefreshRequest;
 import com.example.carrental.model.vo.LoginResponse;
 import com.example.carrental.service.AuthService;
@@ -22,6 +23,12 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.success(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ApiResponse.success("注册成功", null);
     }
 
     @PostMapping("/refresh")

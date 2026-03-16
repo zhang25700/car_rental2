@@ -16,6 +16,14 @@ export function createOrder(data) {
   });
 }
 
+export function rentVehicle(data) {
+  return request({
+    url: "/user/orders/rent",
+    method: "post",
+    data
+  });
+}
+
 export function updateOrderStatus(id, status) {
   return request({
     url: `/orders/${id}/status`,
