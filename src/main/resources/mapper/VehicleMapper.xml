@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.carrental.mapper.VehicleMapper">
+
+    <resultMap id="VehicleMap" type="com.example.carrental.model.entity.Vehicle">
+        <id column="id" property="id"/>
+    </resultMap>
+
+    <select id="selectByCondition" resultMap="VehicleMap">
+        select id, vehicle_no, brand, model, color, seat_count, daily_price, status, hot_flag, cover_image,
+               description, created_at, updated_at
+        from vehicle
+        <where>
+            <if test="brand != null and brand != ''">
+                and brand = #{brand}
+            </if>
+            <if test="model != null and model != ''">
+                and model like concat('%', #{model}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="seatCount != null">
+                and seat_count = #{seatCount}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (vehicle_no like concat('%', #{keyword}, '%')
+                or brand like concat('%', #{keyword}, '%')
+                or model like concat('%', #{keyword}, '%'))
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <select id="selectHotVehicles" resultMap="VehicleMap">
+        select id, vehicle_no, brand, model, color, seat_count, daily_price, status, hot_flag, cover_image,
+               description, created_at, updated_at
+        from vehicle
+        where hot_flag = 1 and status = 'AVAILABLE'
+        order by updated_at desc
+        limit 10
+    </select>
+
+    <select id="selectById" resultMap="VehicleMap">
+        select id, vehicle_no, brand, model, color, seat_count, daily_price, status, hot_flag, cover_image,
+               description, created_at, updated_at
+        from vehicle
+        where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into vehicle (vehicle_no, brand, model, color, seat_count, daily_price, status, hot_flag,
+                             cover_image, description, created_at, updated_at)
+        values (#{vehicleNo}, #{brand}, #{model}, #{color}, #{seatCount}, #{dailyPrice}, #{status}, #{hotFlag},
+                #{coverImage}, #{description}, now(), now())
+    </insert>
+
+    <update id="update">
+        update vehicle
+        set vehicle_no = #{vehicleNo},
+            brand = #{brand},
+            model = #{model},
+            color = #{color},
+            seat_count = #{seatCount},
+            daily_price = #{dailyPrice},
+            status = #{status},
+            hot_flag = #{hotFlag},
+            cover_image = #{coverImage},
+            description = #{description},
+            updated_at = now()
+        where id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        update vehicle
+        set status = #{status},
+            updated_at = now()
+        where id = #{id}
+    </update>
+</mapper>

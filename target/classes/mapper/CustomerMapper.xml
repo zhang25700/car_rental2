@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.carrental.mapper.CustomerMapper">
+
+    <resultMap id="CustomerMap" type="com.example.carrental.model.entity.Customer">
+        <id column="id" property="id"/>
+    </resultMap>
+
+    <select id="selectAll" resultMap="CustomerMap">
+        select id, customer_name, phone, gender, driver_license_no, id_card_no, status, created_at, updated_at
+        from customer
+        order by id desc
+    </select>
+
+    <select id="selectById" resultMap="CustomerMap">
+        select id, customer_name, phone, gender, driver_license_no, id_card_no, status, created_at, updated_at
+        from customer
+        where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into customer (customer_name, phone, gender, driver_license_no, id_card_no, status, created_at, updated_at)
+        values (#{customerName}, #{phone}, #{gender}, #{driverLicenseNo}, #{idCardNo}, #{status}, now(), now())
+    </insert>
+
+    <update id="update">
+        update customer
+        set customer_name = #{customerName},
+            phone = #{phone},
+            gender = #{gender},
+            driver_license_no = #{driverLicenseNo},
+            id_card_no = #{idCardNo},
+            status = #{status},
+            updated_at = now()
+        where id = #{id}
+    </update>
+</mapper>

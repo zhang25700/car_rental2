@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.carrental.mapper.RentalOrderMapper">
+
+    <resultMap id="OrderMap" type="com.example.carrental.model.entity.RentalOrder">
+        <id column="id" property="id"/>
+    </resultMap>
+
+    <select id="selectByCondition" resultMap="OrderMap">
+        select id, order_no, customer_id, vehicle_id, pickup_time, return_time, daily_rent, total_amount,
+               order_status, remark, created_by, created_at, updated_at
+        from rental_order
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no = #{orderNo}
+            </if>
+            <if test="customerId != null">
+                and customer_id = #{customerId}
+            </if>
+            <if test="vehicleId != null">
+                and vehicle_id = #{vehicleId}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and order_status = #{orderStatus}
+            </if>
+            <if test="pickupDateStart != null and pickupDateStart != ''">
+                and pickup_time <![CDATA[ >= ]]> #{pickupDateStart}
+            </if>
+            <if test="pickupDateEnd != null and pickupDateEnd != ''">
+                and pickup_time <![CDATA[ <= ]]> #{pickupDateEnd}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <select id="selectById" resultMap="OrderMap">
+        select id, order_no, customer_id, vehicle_id, pickup_time, return_time, daily_rent, total_amount,
+               order_status, remark, created_by, created_at, updated_at
+        from rental_order
+        where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_order (order_no, customer_id, vehicle_id, pickup_time, return_time, daily_rent,
+                                  total_amount, order_status, remark, created_by, created_at, updated_at)
+        values (#{orderNo}, #{customerId}, #{vehicleId}, #{pickupTime}, #{returnTime}, #{dailyRent},
+                #{totalAmount}, #{orderStatus}, #{remark}, #{createdBy}, now(), now())
+    </insert>
+
+    <update id="updateStatus">
+        update rental_order
+        set order_status = #{orderStatus},
+            updated_at = now()
+        where id = #{id}
+    </update>
+</mapper>
