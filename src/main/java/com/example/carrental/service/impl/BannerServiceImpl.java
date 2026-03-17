@@ -15,6 +15,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 首页广告服务实现。
+ * 广告列表缓存到 Redis，支撑用户端首页广告轮播和活动展示。
+ */
 public class BannerServiceImpl implements BannerService {
 
     private static final String BANNER_CACHE_KEY = "cache:banner:list";
@@ -24,6 +28,10 @@ public class BannerServiceImpl implements BannerService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final CacheProperties cacheProperties;
 
+    /**
+     * 查询启用状态的广告。
+     * 命中缓存直接返回；未命中时回源数据库并写回缓存。
+     */
     @Override
     @SuppressWarnings("unchecked")
     public List<Banner> listActiveBanners() {
@@ -44,6 +52,9 @@ public class BannerServiceImpl implements BannerService {
         return banners;
     }
 
+    /**
+     * 广告新增或修改后清理缓存，保证用户端读取到最新数据。
+     */
     @Override
     public void save(Banner banner) {
         if (banner.getId() == null) {
@@ -54,6 +65,9 @@ public class BannerServiceImpl implements BannerService {
         redisTemplate.delete(BANNER_CACHE_KEY);
     }
 
+    /**
+     * 生成带随机抖动的缓存过期时间。
+     */
     private Duration randomTtl(long baseMinutes) {
         long extra = ThreadLocalRandom.current().nextLong(cacheProperties.getTtlRandomBoundMinutes() + 1);
         return Duration.ofMinutes(baseMinutes + extra);

@@ -22,6 +22,10 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+/**
+ * 统一认证拦截器。
+ * 负责校验 Access Token、写入当前登录用户上下文，并在令牌即将过期时尝试无感刷新。
+ */
 public class AuthInterceptor implements HandlerInterceptor {
 
     private static final String AUTHORIZATION = "Authorization";
@@ -34,6 +38,10 @@ public class AuthInterceptor implements HandlerInterceptor {
     private final RedisTemplate<String, Object> redisTemplate;
     private final com.example.carrental.config.JwtProperties jwtProperties;
 
+    /**
+     * 在控制器执行前完成认证。
+     * 认证成功后会把当前用户放入 ThreadLocal，供后续业务代码直接获取。
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String header = request.getHeader(AUTHORIZATION);
@@ -47,6 +55,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (!"access".equals(claims.get("tokenType", String.class))) {
                 throw new BusinessException(ErrorCode.UNAUTHORIZED, "invalid access token");
             }
+            // 从 Token 还原最小用户信息并绑定到当前线程。
             LoginUser loginUser = jwtTokenProvider.toLoginUser(claims);
             UserContext.set(loginUser);
             refreshWhenNecessary(request, response, loginUser, claims.getExpiration().toInstant());
@@ -61,11 +70,18 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
     }
 
+    /**
+     * 请求结束后清理 ThreadLocal，避免线程复用导致用户信息串用。
+     */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         UserContext.clear();
     }
 
+    /**
+     * Access Token 快过期时，根据 Refresh Token 和 Redis 会话状态换发一组新令牌。
+     * 新令牌通过响应头回传给前端，前端可直接覆盖本地缓存，实现无感刷新。
+     */
     private void refreshWhenNecessary(HttpServletRequest request, HttpServletResponse response, LoginUser loginUser, Instant accessExpireAt) {
         long remainMinutes = Duration.between(Instant.now(), accessExpireAt).toMinutes();
         if (remainMinutes > jwtProperties.getRefreshThresholdMinutes()) {
@@ -94,6 +110,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         response.setHeader(NEW_REFRESH_TOKEN, newRefreshToken);
     }
 
+    /**
+     * 统一约定 Refresh Token 在 Redis 中的 Key 格式。
+     */
     public static String buildRefreshTokenKey(Long userId) {
         return "auth:refresh:" + userId;
     }

@@ -27,6 +27,10 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 订单服务实现。
+ * 覆盖后台订单查询、管理员创建订单、用户端下单，以及订单与车辆状态联动更新。
+ */
 public class OrderServiceImpl implements OrderService {
 
     private final CustomerMapper customerMapper;
@@ -34,6 +38,9 @@ public class OrderServiceImpl implements OrderService {
     private final SysUserMapper sysUserMapper;
     private final VehicleMapper vehicleMapper;
 
+    /**
+     * 后台订单分页查询。
+     */
     @Override
     public PageResult<RentalOrder> page(OrderQueryRequest request) {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
@@ -41,6 +48,9 @@ public class OrderServiceImpl implements OrderService {
         return PageResult.from(new PageInfo<>(list));
     }
 
+    /**
+     * 创建订单，并将对应车辆状态改为 RENTED。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(RentalOrder order) {
@@ -53,6 +63,10 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    /**
+     * 用户端租车入口。
+     * 将用户提交的租车表单转换成标准订单实体，再复用统一下单逻辑。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createUserOrder(UserRentOrderRequest request) {
@@ -68,12 +82,19 @@ public class OrderServiceImpl implements OrderService {
         create(order);
     }
 
+    /**
+     * 更新订单状态。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long id, String orderStatus) {
         rentalOrderMapper.updateStatus(id, orderStatus);
     }
 
+    /**
+     * 确保当前登录用户有对应客户档案。
+     * 如果历史数据缺失，则按当前账号自动补建一条客户信息。
+     */
     private Customer ensureCustomerProfile() {
         String username = UserContext.get().getUsername();
         Customer customer = customerMapper.selectByPhone(username);
@@ -97,6 +118,9 @@ public class OrderServiceImpl implements OrderService {
         return newCustomer;
     }
 
+    /**
+     * 生成业务订单号。
+     */
     private String buildOrderNo() {
         return "CR" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
                 + UUID.randomUUID().toString().substring(0, 6).toUpperCase();

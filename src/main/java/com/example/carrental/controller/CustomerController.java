@@ -15,18 +15,28 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
+/**
+ * 客户档案管理接口。
+ * 负责后台客户资料查询和维护。
+ */
 public class CustomerController {
 
     private final CustomerService customerService;
 
+    /**
+     * 查询客户列表。
+     */
     @GetMapping
     public ApiResponse<List<Customer>> list() {
         return ApiResponse.success(customerService.list());
     }
 
+    /**
+     * 新增或修改客户资料。
+     */
     @PostMapping
     public ApiResponse<Void> save(@RequestBody Customer customer) {
         customerService.save(customer);
-        return ApiResponse.success("saved", null);
+        return ApiResponse.success("保存成功", null);
     }
 }

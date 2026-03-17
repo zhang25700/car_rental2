@@ -17,16 +17,27 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 用户账号服务实现。
+ * 负责后台账号列表查询、新增、编辑和密码重置逻辑。
+ */
 public class UserServiceImpl implements UserService {
 
     private final SysUserMapper sysUserMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    /**
+     * 查询系统账号列表，并过滤掉密码字段后返回前端。
+     */
     @Override
     public List<UserVO> list() {
         return sysUserMapper.selectAll().stream().map(this::toVO).collect(Collectors.toList());
     }
 
+    /**
+     * 新增或修改账号。
+     * 新建账号时若未指定密码，则使用默认密码 password。
+     */
     @Override
     public void save(UserSaveRequest request) {
         if (request.getId() == null) {
@@ -62,10 +73,16 @@ public class UserServiceImpl implements UserService {
         sysUserMapper.update(existing);
     }
 
+    /**
+     * 统一返回默认密码。
+     */
     private String defaultPassword(String password) {
         return password == null || password.isBlank() ? "password" : password;
     }
 
+    /**
+     * 将数据库实体转换为前端展示对象。
+     */
     private UserVO toVO(SysUser user) {
         UserVO vo = new UserVO();
         BeanUtils.copyProperties(user, vo);

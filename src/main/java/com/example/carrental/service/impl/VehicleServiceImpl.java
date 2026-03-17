@@ -19,6 +19,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 车辆服务实现。
+ * 负责车辆分页查询、热点车辆缓存，以及车辆变更后的缓存失效处理。
+ */
 public class VehicleServiceImpl implements VehicleService {
 
     private static final String HOT_VEHICLE_CACHE_KEY = "cache:vehicle:hot";
@@ -28,6 +32,9 @@ public class VehicleServiceImpl implements VehicleService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final CacheProperties cacheProperties;
 
+    /**
+     * 后台车辆分页查询，直接走数据库动态 SQL。
+     */
     @Override
     public PageResult<Vehicle> page(VehicleQueryRequest request) {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
@@ -35,6 +42,10 @@ public class VehicleServiceImpl implements VehicleService {
         return PageResult.from(new PageInfo<>(list));
     }
 
+    /**
+     * 热点车辆采用 Cache-Aside 模式读取。
+     * 先查 Redis，未命中再查数据库，并通过空值缓存和随机过期时间降低穿透与雪崩风险。
+     */
     @Override
     @SuppressWarnings("unchecked")
     public List<Vehicle> listHotVehicles() {
@@ -56,6 +67,9 @@ public class VehicleServiceImpl implements VehicleService {
         return list;
     }
 
+    /**
+     * 车辆新增或修改后，主动删除热点缓存，等待下次访问重新构建。
+     */
     @Override
     public void save(Vehicle vehicle) {
         if (vehicle.getId() == null) {
@@ -66,12 +80,18 @@ public class VehicleServiceImpl implements VehicleService {
         redisTemplate.delete(HOT_VEHICLE_CACHE_KEY);
     }
 
+    /**
+     * 更新车辆状态并同步清理热点缓存。
+     */
     @Override
     public void updateStatus(Long id, String status) {
         vehicleMapper.updateStatus(id, status);
         redisTemplate.delete(HOT_VEHICLE_CACHE_KEY);
     }
 
+    /**
+     * 在基础 TTL 上叠加随机分钟数，降低大量缓存 Key 同时过期带来的冲击。
+     */
     private Duration randomTtl(long baseMinutes) {
         long extra = ThreadLocalRandom.current().nextLong(cacheProperties.getTtlRandomBoundMinutes() + 1);
         return Duration.ofMinutes(baseMinutes + extra);

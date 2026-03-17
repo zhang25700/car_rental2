@@ -9,8 +9,8 @@ import com.example.carrental.model.auth.LoginUser;
 import com.example.carrental.model.dto.LoginRequest;
 import com.example.carrental.model.dto.RegisterRequest;
 import com.example.carrental.model.dto.TokenRefreshRequest;
-import com.example.carrental.model.entity.SysUser;
 import com.example.carrental.model.entity.Customer;
+import com.example.carrental.model.entity.SysUser;
 import com.example.carrental.model.vo.LoginResponse;
 import com.example.carrental.security.AuthInterceptor;
 import com.example.carrental.security.JwtTokenProvider;
@@ -23,11 +23,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.TimeUnit;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * 认证服务实现。
+ * 负责登录、注册、Refresh Token 校验，以及令牌的生成和持久化。
+ */
 public class AuthServiceImpl implements AuthService {
 
     private final SysUserMapper sysUserMapper;
@@ -37,6 +41,10 @@ public class AuthServiceImpl implements AuthService {
     private final JwtProperties jwtProperties;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    /**
+     * 用户名密码登录。
+     * 登录成功后会签发 Access Token 和 Refresh Token，并把 Refresh Token 写入 Redis。
+     */
     @Override
     public LoginResponse login(LoginRequest request) {
         SysUser user = sysUserMapper.selectByUsername(request.getUsername());
@@ -51,6 +59,10 @@ public class AuthServiceImpl implements AuthService {
         return createTokens(loginUser);
     }
 
+    /**
+     * 注册用户端账号。
+     * 新账号默认角色为 USER，并自动创建一个客户档案，保证后续可以直接租车下单。
+     */
     @Override
     public void register(RegisterRequest request) {
         if (sysUserMapper.selectByUsername(request.getUsername()) != null) {
@@ -74,6 +86,10 @@ public class AuthServiceImpl implements AuthService {
         customerMapper.insert(customer);
     }
 
+    /**
+     * 通过 Refresh Token 获取新令牌。
+     * 只有 Redis 中保存的当前会话令牌才能通过校验。
+     */
     @Override
     public LoginResponse refresh(TokenRefreshRequest request) {
         Claims claims = jwtTokenProvider.parse(request.getRefreshToken());
@@ -89,6 +105,10 @@ public class AuthServiceImpl implements AuthService {
         return createTokens(loginUser);
     }
 
+    /**
+     * 统一生成并存储一组令牌。
+     * Access Token 返回给前端做接口访问，Refresh Token 落 Redis 便于续签和会话控制。
+     */
     private LoginResponse createTokens(LoginUser loginUser) {
         String accessToken = jwtTokenProvider.generateAccessToken(loginUser);
         String refreshToken = jwtTokenProvider.generateRefreshToken(loginUser);

@@ -13,8 +13,15 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+/**
+ * Redis 序列化配置。
+ * 统一使用字符串 Key + JSON Value，方便缓存实体对象和查看 Redis 数据。
+ */
 public class RedisConfig {
 
+    /**
+     * 自定义 RedisTemplate，支持 LocalDateTime 等 Java 8 时间类型序列化。
+     */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
